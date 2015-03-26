@@ -10,7 +10,8 @@ module.exports =
     @CACHE_HOST = process.env.CACHE_HOST or 'localhost:9800'
     @CACHE_DIR = process.env.CACHE_DIR or __dirname + '/public'
     if (!fs.existsSync(@CACHE_DIR))
-      fs.mkdirSync(@CACHE_DIR)
+      fs.mkdir @CACHE_DIR, (err) =>
+        # do nothing
 
     return
 
