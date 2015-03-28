@@ -97,6 +97,7 @@ module.exports =
     cacheFile = req.prerender.cacheFile
     shouldWrite = !fs.existsSync(cacheFile.indexPath)
     parsed = cacheFile.parsedUrl
+    self = @
     if (cacheFile.exists)
       stat = fs.statSync(cacheFile.indexPath)
 
@@ -113,7 +114,7 @@ module.exports =
         if (error)
           return
 
-        msg = cleanHtml body
+        msg = self.cleanHtml body
         if (cacheFile.shouldWrite)
           if (fs.existsSync(cacheFile.indexPath))
             fs.unlinkSync cacheFile.indexPath
