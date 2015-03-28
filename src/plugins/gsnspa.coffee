@@ -37,14 +37,14 @@ module.exports =
       req.prerender.cacheFile = cacheFile
 
       # make sure index page is cache before calling localhost
-      @cacheIndexPage req
-      if (@sendFile(res, cacheFile.path))
-        return
+      @cacheIndexPage req, =>
+        if (@sendFile(res, cacheFile.path))
+          return
 
-      parsed = url.parse(req.prerender.url)
-      req.prerender.url = 'http://' + @CACHE_HOST + '/' + siteid + '/' + parsed.search + '&selectFirstStore=true&gourl=' + parsed.pathname
+        parsed = url.parse(req.prerender.url)
+        req.prerender.url = 'http://' + @CACHE_HOST + '/' + siteid + '/' + parsed.search + '&selectFirstStore=true&gourl=' + parsed.pathname
 
-      next()
+        next()
     else
       res.send 404
 
@@ -93,7 +93,7 @@ module.exports =
     msg = msg.replace(/<!--\s+google\s+map[+\s\S]+<\/body>/gi, '<script src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=geometry"></script></body>');
     return msg
 
-  cacheIndexPage: (req) ->
+  cacheIndexPage: (req, next) ->
     cacheFile = req.prerender.cacheFile
     shouldWrite = !fs.existsSync(cacheFile.indexPath)
     parsed = cacheFile.parsedUrl
@@ -112,7 +112,7 @@ module.exports =
       util.log 'index caching: ' + parsed.protocol + '//' + parsed.host
       request(parsed.protocol + '//' + parsed.host, (error, response, body) ->
         if (error)
-          return
+          return next()
 
         msg = self.cleanHtml body
         if (cacheFile.shouldWrite)
@@ -120,7 +120,10 @@ module.exports =
             fs.unlinkSync cacheFile.indexPath
 
           fs.writeFileSync(cacheFile.indexPath, msg)
+        next()
       )
+    else
+      next()
     return
 
   removeScriptTags: (msg) ->
