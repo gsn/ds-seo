@@ -25,9 +25,10 @@ module.exports =
 
     if (siteid?)
       indexPath = path.join(@CACHE_DIR, '' + siteid, 'index.html')
+      sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
       cacheFile = {
         indexPath: indexPath
-        path: indexPath.replace('/index.', parsed.pathname + '.')
+        myPath: indexPath.replace('/index.', sanitizedPath + '.')
         url: req.prerender.url  # store original url
         pathname: parsed.pathname
         cache: parsed.query.cache
@@ -38,11 +39,11 @@ module.exports =
 
       # make sure index page is cache before calling localhost
       @cacheIndexPage req, =>
-        if (@sendFile(res, cacheFile.path))
+        if (@sendFile(res, cacheFile.myPath, cacheFile.cache))
           return
 
         parsed = url.parse(req.prerender.url)
-        req.prerender.url = 'http://' + @CACHE_HOST + '/' + siteid + '/' + parsed.search + '&selectFirstStore=true&gourl=' + parsed.pathname
+        req.prerender.url = 'http://' + @CACHE_HOST + parsed.pathname + parsed.search + '&selectFirstStore=true'
 
         next()
     else
@@ -50,11 +51,11 @@ module.exports =
 
     return
 
-  sendFile: (res, filePath) ->
+  sendFile: (res, filePath, cache) ->
     if (fs.existsSync(filePath))
       stat = fs.statSync(filePath)
 
-      if (stat.ctime.getDate() != (new Date()).getDate())
+      if (cache == 'daily' and stat.ctime.getDate() != (new Date()).getDate())
         fs.unlinkSync filePath
         return false
 
@@ -157,7 +158,7 @@ module.exports =
     cacheFile = req.prerender.cacheFile
     # if url contain cache, then cache it
     if (cacheFile.cache)
-      fs.writeFileSync(cacheFile.path, msg)
+      fs.writeFileSync(cacheFile.myPath, msg)
 
     next()
     return

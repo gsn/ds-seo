@@ -10,6 +10,12 @@ if !fs.existsSync(basedir)
   fs.mkdirSync basedir
 
 #app.use compression()
-app.use express.static(__dirname + '/lib/plugins/public')
+app.use "*", (req, res) =>
+  file = path.join(basedir, req.query.siteid, 'index.html')
+  if fs.existsSync(file)
+    console.log 'sending: %s', file.replace(__dirname, '')
+    res.sendFile file
+
+app.use express.static(basedir)
 app.listen port, =>
-  console.log("Express cache server listening on port %d in %s mode", port, app.settings.env)
+  console.log "Express cache server listening on port %d in %s mode", port, app.settings.env
