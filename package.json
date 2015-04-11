@@ -45,6 +45,7 @@
     "gulp-concat": "~2.3.4",
     "gulp-util": "*",
     "gulp-git": "~1.1.0",
+    "forever": "*",
     "del": "~1.1.1",
     "run-sequence": "~1.0.2",
     "jshint-stylish": "^1.0.0"
