@@ -39,7 +39,7 @@ module.exports =
         cache: parsed.query.cache
         siteid: siteid
         parsedUrl: parsed
-        upath: "#{siteid}_#{sanitizedPath}_#{sanitizedSearch}".replace(/(_)+/g, '_')
+        upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_')
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
@@ -156,7 +156,7 @@ es_cache =
 
     client.get
       index: self.indexName()
-      type: 'escache'
+      type: 'escache1'
       id: key
     , callback
     return
@@ -168,7 +168,7 @@ es_cache =
 
     client.index
       index: self.indexName()
-      type: 'escache'
+      type: 'escache1'
       id: key
       body: value
     , callback
