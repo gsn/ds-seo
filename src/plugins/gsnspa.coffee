@@ -30,7 +30,7 @@ module.exports =
     if (siteid?)
       indexPath = path.join(@CACHE_DIR, '' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
-      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_')
+      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '')
       cacheFile = {
         indexPath: indexPath
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
@@ -39,7 +39,7 @@ module.exports =
         cache: parsed.query.cache
         siteid: siteid
         parsedUrl: parsed
-        upath: "#{siteid}_#{sanitizedPath}_#{sanitizedSearch}"
+        upath: "#{siteid}_#{sanitizedPath}_#{sanitizedSearch}".replace(/(_)+/g, '_')
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
