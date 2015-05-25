@@ -36,7 +36,9 @@
     "gulp-coffee": "*",
     "gulp-util": "*",
     "gulp-git": "~1.1.0",
+    "tree-kill": "0.0.6",
     "forever": "*",
+    "elasticsearch": "*",
     "del": "~1.1.1",
     "run-sequence": "~1.0.2"
   },

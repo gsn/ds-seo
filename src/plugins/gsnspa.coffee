@@ -4,6 +4,7 @@ url = require('url')
 request = require('request')
 util = require('../util')
 cache_manager = require('cache-manager')
+elasticsearch = require('elasticsearch')
 myEsHost = "localhost:9200"
 
 # cache spa to a local file
