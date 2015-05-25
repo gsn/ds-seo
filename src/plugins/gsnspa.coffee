@@ -147,7 +147,7 @@ es_cache =
   indexName: ->
     today = new Date()
     todayString = today.toISOString().split('T')[0]
-    return "espcache-#{todayString}"
+    return "escache-#{todayString}"
   get: (key, callback) ->
     self = @
     client = new (elasticsearch.Client)
@@ -156,7 +156,7 @@ es_cache =
 
     client.get
       index: self.indexName()
-      type: 'escache1'
+      type: 'escache'
       id: key
     , callback
     return
@@ -168,7 +168,7 @@ es_cache =
 
     client.index
       index: self.indexName()
-      type: 'escache1'
+      type: 'escache'
       id: key
       body: value
     , callback
