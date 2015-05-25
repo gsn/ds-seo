@@ -3,10 +3,13 @@ path = require('path')
 url = require('url')
 request = require('request')
 util = require('../util')
+cache_manager = require('cache-manager')
+myEsHost = "localhost:9200"
 
 # cache spa to a local file
 module.exports =
   init: ->
+    @cache = cache_manager.caching(store: es_cache)
     @CACHE_HOST = process.env.CACHE_HOST or 'localhost:9800'
     @CACHE_DIR = process.env.CACHE_DIR or __dirname + '/public'
     if (!fs.existsSync(@CACHE_DIR))
@@ -39,49 +42,21 @@ module.exports =
 
       # make sure index page is cache before calling localhost
       @cacheIndexPage req, =>
-        if (@sendFile(res, cacheFile.myPath, cacheFile.cache))
-          return
-
         parsed = url.parse(req.prerender.url)
         req.prerender.url = 'http://' + @CACHE_HOST + parsed.pathname + parsed.search + '&selectFirstStore=true'
 
-        next()
+        @cache.get cacheFile.myPath, (err, result) ->
+          if err
+            console.error err
+          if !err and result?._source
+            console.log 'cache hit'
+            return res.send(200, result._source.content)
+          next()
+          return
     else
       res.send 404
 
     return
-
-  sendFile: (res, filePath, cache) ->
-    if (fs.existsSync(filePath))
-      stat = fs.statSync(filePath)
-
-      if (cache == 'daily' and stat.ctime.getDate() != (new Date()).getDate())
-        fs.unlinkSync filePath
-        return false
-
-      res.writeHead(200, {
-          'Content-Type': 'text/html',
-          'Content-Length': stat.size
-      })
-
-      # stream the data to client
-      readFile = fs.createReadStream(filePath)
-      readFile.on("data", (data) =>
-        if (!res.write(data))
-          readFile.pause()
-      )
-
-      res.on("drain", () =>
-        readFile.resume()
-      )
-
-      readFile.on("end", () =>
-        res.end()
-      )
-
-      return true
-
-    return false
 
   cleanHtml: (msg) ->
     msg = msg.replace(/\\n|\\t|\\r|\\f/g, '');
@@ -155,10 +130,43 @@ module.exports =
 
     req.prerender.documentHTML = msg
 
-    cacheFile = req.prerender.cacheFile
-    # if url contain cache, then cache it
-    if (cacheFile.cache)
-      fs.writeFileSync(cacheFile.myPath, msg)
+    @cache.set cacheFile.myPath, { url: req.prerender.url, content: req.prerender.documentHTML }, (err, result) ->
+      if err
+        console.error err
+      return
 
     next()
+    return
+
+es_cache = 
+  indexName: ->
+    today = new Date()
+    todayString = today.toISOString().split('T')[0]
+    return "espcache#{todayString}"
+  get: (key, callback) ->
+    self = @
+    client = new (elasticsearch.Client)
+      host: myEsHost
+      #log: 'trace'
+
+    client.get
+      index: self.indexName()
+      type: 'espcache'
+      id: key
+    , callback
+    return
+  set: (key, value, callback) ->
+    self = @
+    client = new (elasticsearch.Client)
+      host: myEsHost
+      #log: 'trace'
+
+    client.index
+      index: self.indexName()
+      type: 'espcache'
+      id: key
+      body:
+        url: value.url
+        content: value.content
+    , callback
     return
