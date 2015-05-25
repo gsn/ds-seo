@@ -116,6 +116,7 @@ module.exports =
     if !req.prerender.documentHTML
       return next()
 
+    cacheFile = req.prerender.cacheFile;
     # clean up content before write
     msg = req.prerender.documentHTML.toString()
     msg = @cleanHtml msg
