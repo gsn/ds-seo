@@ -5,7 +5,7 @@ request = require('request')
 util = require('../util')
 cache_manager = require('cache-manager')
 elasticsearch = require('elasticsearch')
-myEsHost = "localhost:9200"
+myEsHost = "172.25.46.108:9200"
 
 # cache spa to a local file
 module.exports =
