@@ -135,7 +135,7 @@ module.exports =
 
     req.prerender.documentHTML = msg
 
-    @cache.set cacheFile.upath, { id: cacheFile.upath, url: cacheFile.url, ip: cacheFile.ip, content: req.prerender.documentHTML, siteid: cacheFile.siteid, pathname: parsedUrl.pathname }, (err, result) ->
+    @cache.set cacheFile.upath, { id: cacheFile.upath, url: cacheFile.url, ip: cacheFile.ip, content: msg, siteid: cacheFile.siteid, pathname: cacheFile.pathname }, (err, result) ->
       if err
         console.error err
       return
