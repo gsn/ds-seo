@@ -38,6 +38,7 @@ module.exports =
         cache: parsed.query.cache
         siteid: siteid
         parsedUrl: parsed
+        ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
 
@@ -132,7 +133,7 @@ module.exports =
 
     req.prerender.documentHTML = msg
 
-    @cache.set cacheFile.myPath, { url: req.prerender.url, content: req.prerender.documentHTML }, (err, result) ->
+    @cache.set cacheFile.myPath, { url: cacheFile.url, ip: cacheFile.ip, content: req.prerender.documentHTML }, (err, result) ->
       if err
         console.error err
       return
