@@ -162,6 +162,8 @@ es_cache =
     return
   set: (key, value, callback) ->
     self = @
+    today = new Date()
+    value.created = today.toISOString()
     client = new (elasticsearch.Client)
       host: myEsHost
       #log: 'trace'
