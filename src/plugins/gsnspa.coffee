@@ -30,6 +30,7 @@ module.exports =
     if (siteid?)
       indexPath = path.join(@CACHE_DIR, '' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
+      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_')
       cacheFile = {
         indexPath: indexPath
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
@@ -38,6 +39,7 @@ module.exports =
         cache: parsed.query.cache
         siteid: siteid
         parsedUrl: parsed
+        upath: "#{siteid}_#{sanitizedPath}_#{sanitizedSearch}"
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
@@ -47,7 +49,7 @@ module.exports =
         parsed = url.parse(req.prerender.url)
         req.prerender.url = 'http://' + @CACHE_HOST + parsed.pathname + parsed.search + '&selectFirstStore=true'
 
-        @cache.get cacheFile.myPath, (err, result) ->
+        @cache.get cacheFile.upath, (err, result) ->
           if err
             console.error err
           if !err and result?._source
@@ -133,7 +135,7 @@ module.exports =
 
     req.prerender.documentHTML = msg
 
-    @cache.set cacheFile.myPath, { url: cacheFile.url, ip: cacheFile.ip, content: req.prerender.documentHTML }, (err, result) ->
+    @cache.set cacheFile.upath, { id: cacheFile.upath, url: cacheFile.url, ip: cacheFile.ip, content: req.prerender.documentHTML, siteid: cacheFile.siteid, pathname: parsedUrl.pathname }, (err, result) ->
       if err
         console.error err
       return
@@ -154,7 +156,7 @@ es_cache =
 
     client.get
       index: self.indexName()
-      type: 'espcache1'
+      type: 'escache1'
       id: key
     , callback
     return
@@ -166,11 +168,8 @@ es_cache =
 
     client.index
       index: self.indexName()
-      type: 'espcache1'
+      type: 'escache1'
       id: key
-      body:
-        ip: value.ip
-        url: value.url
-        content: value.content
+      body: value
     , callback
     return
