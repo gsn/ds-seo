@@ -157,6 +157,7 @@ es_cache =
     client.get
       index: self.indexName()
       type: 'escache1'
+      ignore_unavailable: true
       id: key
     , callback
     return
@@ -172,6 +173,7 @@ es_cache =
       index: self.indexName()
       type: 'escache1'
       id: key
+      ignore_unavailable: true
       body: value
     , callback
     return
