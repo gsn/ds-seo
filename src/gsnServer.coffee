@@ -1,6 +1,7 @@
 prerender = require './lib'
 cp        = require('child_process')
 cluster   = require('cluster')
+path      = require('path')
 
 server = prerender(
   workers: process.env.PHANTOM_CLUSTER_NUM_WORKERS or 4
@@ -12,4 +13,4 @@ server.use prerender.gsnspa()
 server.start()
 
 if cluster.isMaster
-  cp.fork 'prerender/gsnCacheServer.js'
+  cp.fork path.join(__dirname, 'gsnCacheServer.js')
