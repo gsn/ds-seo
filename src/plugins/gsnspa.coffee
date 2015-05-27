@@ -11,12 +11,6 @@ myEsHost = "172.25.46.108:9200"
 module.exports =
   init: ->
     @cache = cache_manager.caching(store: es_cache)
-    @CACHE_HOST = process.env.CACHE_HOST or 'localhost:9800'
-    @CACHE_DIR = process.env.CACHE_DIR or __dirname + '/public'
-    if (!fs.existsSync(@CACHE_DIR))
-      fs.mkdir @CACHE_DIR, (err) =>
-        # do nothing
-
     return
 
   beforePhantomRequest: (req, res, next) ->
@@ -28,7 +22,7 @@ module.exports =
       return
 
     if (siteid?)
-      indexPath = path.join(@CACHE_DIR, '' + siteid, 'index.html')
+      indexPath = path.join('' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
       sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '')
       cacheFile = {
@@ -43,20 +37,17 @@ module.exports =
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
+      parsed = url.parse(req.prerender.url)
+      req.prerender.url += '&selectFirstStore=true'
 
-      # make sure index page is cache before calling localhost
-      @cacheIndexPage req, =>
-        parsed = url.parse(req.prerender.url)
-        req.prerender.url += '&selectFirstStore=true'
-
-        @cache.get cacheFile.upath, (err, result) ->
-          if err
-            console.error err
-          if !err and result?._source
-            console.log 'cache hit'
-            return res.send(200, result._source.content)
-          next()
-          return
+      @cache.get cacheFile.upath, (err, result) ->
+        if err
+          console.error err
+        if !err and result?._source
+          console.log 'cache hit'
+          return res.send(200, result._source.content)
+        next()
+        return
     else
       res.send 404
 
@@ -71,39 +62,6 @@ module.exports =
     msg = msg.replace(/<div.+hidden ng-scope.+alt\=\"tracking\s+pixel\"><\/div>/gi, '');
     msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":');
     return msg
-
-  cacheIndexPage: (req, next) ->
-    cacheFile = req.prerender.cacheFile
-    shouldWrite = !fs.existsSync(cacheFile.indexPath)
-    parsed = cacheFile.parsedUrl
-    self = @
-    if (cacheFile.exists)
-      stat = fs.statSync(cacheFile.indexPath)
-
-      # if file exists and not current, overwrite file
-      shouldWrite = stat.ctime.getDate() != (new Date()).getDate()
-
-    else if (!fs.existsSync(path.dirname(cacheFile.indexPath)))
-      fs.mkdirSync(path.dirname(cacheFile.indexPath))
-
-    cacheFile.shouldWrite = shouldWrite or parsed.query.forcerefresh
-    if (cacheFile.shouldWrite)
-      util.log 'index caching: ' + parsed.protocol + '//' + parsed.host
-      request(parsed.protocol + '//' + parsed.host, (error, response, body) ->
-        if (error)
-          return next()
-
-        msg = self.cleanHtml body
-        if (cacheFile.shouldWrite)
-          if (fs.existsSync(cacheFile.indexPath))
-            fs.unlinkSync cacheFile.indexPath
-
-          fs.writeFileSync(cacheFile.indexPath, msg)
-        next()
-      )
-    else
-      next()
-    return
 
   removeScriptTags: (msg) ->
     matches = msg.match(/<script(?:.*?)>(?:[\S\s]*?)<\/script>/gi)
