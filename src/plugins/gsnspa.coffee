@@ -30,7 +30,7 @@ module.exports =
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
         url: req.prerender.url  # store original url
         pathname: parsed.pathname
-        cache: parsed.query.cache
+        search: (parsed.search or '').replace("siteid=#{siteid}&cache=daily", '').replace(/&$/g, '').replace(/^\?/g, '')
         siteid: siteid
         parsedUrl: parsed
         upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_')
@@ -91,8 +91,16 @@ module.exports =
     msg = msg.replace(/></g, '>\r\n<');
 
     req.prerender.documentHTML = msg
+    payload = 
+      id: cacheFile.upath
+      url: cacheFile.url
+      ip: cacheFile.ip
+      content: msg
+      siteid: cacheFile.siteid
+      pathname: cacheFile.pathname
+      search: cacheFile.search
 
-    @cache.set cacheFile.upath, { id: cacheFile.upath, url: cacheFile.url, ip: cacheFile.ip, content: msg, siteid: cacheFile.siteid, pathname: cacheFile.pathname }, (err, result) ->
+    @cache.set cacheFile.upath, payload, (err, result) ->
       if err
         console.error err
       return
