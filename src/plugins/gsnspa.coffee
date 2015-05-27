@@ -47,7 +47,7 @@ module.exports =
       # make sure index page is cache before calling localhost
       @cacheIndexPage req, =>
         parsed = url.parse(req.prerender.url)
-        req.prerender.url = 'http://' + @CACHE_HOST + parsed.pathname + parsed.search + '&selectFirstStore=true'
+        req.prerender.url += '&selectFirstStore=true'
 
         @cache.get cacheFile.upath, (err, result) ->
           if err
@@ -65,12 +65,11 @@ module.exports =
   cleanHtml: (msg) ->
     msg = msg.replace(/\\n|\\t|\\r|\\f/g, '');
     msg = msg.replace(/\=\"\/\//gi, '="http://');
-    msg = msg.replace(/<!--endhead-->[+\s\S]+<body/gi, '</head><body');
+    # msg = msg.replace(/<!--endhead-->[+\s\S]+<body/gi, '</head><body');
     msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--begin:analytics-->/gi, '');
     msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--end:analytics-->/gi, '');
     msg = msg.replace(/<div.+hidden ng-scope.+alt\=\"tracking\s+pixel\"><\/div>/gi, '');
     msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":');
-    msg = msg.replace(/<!--\s+google\s+map[+\s\S]+<\/body>/gi, '<script src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=geometry"></script></body>');
     return msg
 
   cacheIndexPage: (req, next) ->

@@ -11,6 +11,3 @@ server = prerender(
 
 server.use prerender.gsnspa()
 server.start()
-
-if cluster.isMaster
-  cp.fork path.join(__dirname, 'gsnCacheServer.js')
