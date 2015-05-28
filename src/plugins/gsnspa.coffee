@@ -5,6 +5,7 @@ request = require('request')
 util = require('../util')
 cache_manager = require('cache-manager')
 elasticsearch = require('elasticsearch')
+os = require('os')
 myEsHost = "172.25.46.108:9200"
 
 # cache spa to a local file
@@ -99,6 +100,7 @@ module.exports =
       siteid: cacheFile.siteid
       pathname: cacheFile.pathname
       search: cacheFile.search
+      server: os.hostname()
 
     @cache.set cacheFile.upath, payload, (err, result) ->
       if err
