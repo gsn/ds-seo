@@ -39,7 +39,7 @@ module.exports =
       }
       req.prerender.cacheFile = cacheFile
       parsed = url.parse(req.prerender.url)
-      req.prerender.url += '&selectFirstStore=true'
+      req.prerender.url = req.prerender.url.replace('.staging.', '.production.') + '&selectFirstStore=true'
 
       @cache.get cacheFile.upath, (err, result) ->
         if err
@@ -92,29 +92,34 @@ module.exports =
     msg = msg.replace(/></g, '>\r\n<');
 
     req.prerender.documentHTML = msg
-    payload = 
-      id: cacheFile.upath
-      url: cacheFile.url
-      ip: cacheFile.ip
-      content: msg
-      siteid: cacheFile.siteid
-      pathname: cacheFile.pathname
-      search: cacheFile.search
-      server: os.hostname()
 
-    @cache.set cacheFile.upath, payload, (err, result) ->
-      if err
-        console.error err
-      return
+    if (msg.indexOf('xstore.html') > 0)
+      payload =
+        id: cacheFile.upath
+        url: cacheFile.url
+        ip: cacheFile.ip
+        content: msg
+        siteid: cacheFile.siteid
+        pathname: cacheFile.pathname
+        search: cacheFile.search
+        server: os.hostname()
 
-    next()
+      @cache.set cacheFile.upath, payload, (err, result) ->
+        if err
+          console.error err
+
+        next()
+        return
+    else
+      next()
+
     return
 
-es_cache = 
+es_cache =
   indexName: ->
     today = new Date()
     todayString = today.toISOString().split('T')[0]
-    return "escache-#{todayString}"
+    return "escache-spa" #-#{todayString}"
   get: (key, callback) ->
     self = @
     client = new (elasticsearch.Client)
@@ -132,6 +137,7 @@ es_cache =
     self = @
     today = new Date()
     value.created = today.toISOString()
+    value.createdts = today.getTime()
     client = new (elasticsearch.Client)
       host: myEsHost
       #log: 'trace'
