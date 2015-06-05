@@ -25,7 +25,7 @@ module.exports =
     if (siteid?)
       indexPath = path.join('' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
-      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '')
+      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '').toLowerCase()
       cacheFile = {
         indexPath: indexPath
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
@@ -34,7 +34,7 @@ module.exports =
         search: (parsed.search or '').replace("siteid=#{siteid}&cache=daily", '').replace(/&$/g, '').replace(/^\?/g, '')
         siteid: siteid
         parsedUrl: parsed
-        upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_')
+        upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_').replace('_searchradius_', '').replace(/_$/g, '_')
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       }
       req.prerender.cacheFile = cacheFile
@@ -55,13 +55,11 @@ module.exports =
     return
 
   cleanHtml: (msg) ->
-    msg = msg.replace(/\\n|\\t|\\r|\\f/g, '');
-    msg = msg.replace(/\=\"\/\//gi, '="http://');
-    # msg = msg.replace(/<!--endhead-->[+\s\S]+<body/gi, '</head><body');
-    msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--begin:analytics-->/gi, '');
-    msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--end:analytics-->/gi, '');
-    msg = msg.replace(/<div.+hidden ng-scope.+alt\=\"tracking\s+pixel\"><\/div>/gi, '');
-    msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":');
+    msg = msg.replace(/\\n|\\t|\\r|\\f/g, '');  # remove all new line, tag, and invalid spacing
+    msg = msg.replace(/\=\"\/\//gi, '="http://');  # convert all ="//" to ="http://"
+    msg = msg.replace(/<head>[+\s\S]+<meta charset=\"utf-8\"/gi, '<head><meta charset="utf-8"');  # remove everything before charset utf-8
+    msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--end:analytics-->/gi, ''); # strip out analytics
+    msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":'); # force proxy
     return msg
 
   removeScriptTags: (msg) ->
@@ -80,6 +78,7 @@ module.exports =
     cacheFile = req.prerender.cacheFile;
     # clean up content before write
     msg = req.prerender.documentHTML.toString()
+    validContent = msg.indexOf('xstore.html') > 0
     msg = @cleanHtml msg
     msg = @removeScriptTags msg
 
@@ -93,7 +92,7 @@ module.exports =
 
     req.prerender.documentHTML = msg
 
-    if (msg.indexOf('xstore.html') > 0)
+    if (validContent)
       payload =
         id: cacheFile.upath
         url: cacheFile.url
