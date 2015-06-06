@@ -39,7 +39,7 @@ module.exports =
       }
       req.prerender.cacheFile = cacheFile
       parsed = url.parse(req.prerender.url)
-      req.prerender.url = req.prerender.url.replace('.staging.', '.production.') + '&selectFirstStore=true'
+      req.prerender.url = req.prerender.url.replace('.staging.', '.production.')
 
       @cache.get cacheFile.upath, (err, result) ->
         if err
