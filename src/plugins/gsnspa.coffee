@@ -44,14 +44,18 @@ module.exports =
         newUrl = newUrl + "&sfs=true"
       req.prerender.url = newUrl
 
-      @cache.get cacheFile.upath, (err, result) ->
-        if err
-          console.error err
-        if !err and result?._source
-          console.log 'cache hit'
-          return res.send(200, result._source.content)
+    # proceed next if no cache
+      if parsed.search.indexOf("cache=") < 0
         next()
-        return
+      else 
+        @cache.get cacheFile.upath, (err, result) ->
+          if err
+            console.error err
+          if !err and result?._source
+            console.log 'cache hit'
+            return res.send(200, result._source.content)
+          next()
+          return
     else
       res.send 404
 
