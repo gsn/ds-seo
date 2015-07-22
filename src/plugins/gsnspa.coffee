@@ -18,7 +18,7 @@ module.exports =
     parsed = url.parse(req.prerender.url, true)
     siteid = parsed.query.siteid
     host = parsed.host or parsed.hostname or ''
-    if (host.indexOf('.gsn.io') < 0)
+    if (host.indexOf('.gsnretailer.com') < 0)
       res.send 404
       return
 
@@ -26,7 +26,7 @@ module.exports =
       indexPath = path.join('' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
       sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '').toLowerCase()
-      cacheFile = {
+      cacheFile =
         indexPath: indexPath
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
         url: req.prerender.url  # store original url
@@ -36,15 +36,13 @@ module.exports =
         parsedUrl: parsed
         upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_').replace('_searchradius_', '').replace(/_$/g, '_')
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
-      }
+      
       req.prerender.cacheFile = cacheFile
       parsed = url.parse(req.prerender.url)
-      newUrl = req.prerender.url.replace('.staging.', '.production.')
-      if (newUrl.indexOf('storenbr') < 0 and newUrl.indexOf('storeid') < 0)
-        newUrl = newUrl + "&sfs=true"
+      newUrl = req.prerender.url
       req.prerender.url = newUrl
 
-    # proceed next if no cache
+      # proceed next if no cache
       if parsed.search.indexOf("cache=") < 0
         next()
       else 
@@ -82,10 +80,12 @@ module.exports =
     if !req.prerender.documentHTML
       return next()
 
-    cacheFile = req.prerender.cacheFile;
+    cacheFile = req.prerender.cacheFile
+
     # clean up content before write
     msg = req.prerender.documentHTML.toString()
     validContent = msg.indexOf('xstore.html') > 0
+
     msg = @cleanHtml msg
     msg = @removeScriptTags msg
 
@@ -126,6 +126,7 @@ es_cache =
     today = new Date()
     todayString = today.toISOString().split('T')[0]
     return "escache-spa" #-#{todayString}"
+
   get: (key, callback) ->
     self = @
     client = new (elasticsearch.Client)
@@ -139,6 +140,7 @@ es_cache =
       id: key
     , callback
     return
+
   set: (key, value, callback) ->
     self = @
     today = new Date()
