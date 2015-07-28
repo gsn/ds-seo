@@ -18,7 +18,7 @@ module.exports =
     parsed = url.parse(req.prerender.url, true)
     siteid = parsed.query.siteid
     host = parsed.host or parsed.hostname or ''
-    if (host.indexOf('.gsnretailer.com') < 0)
+    if (host.indexOf('.gsnretailer.com') < 0 && host.indexOf('.gsn.io') < 0)
       res.send 404
       return
 
