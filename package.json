@@ -1,23 +1,23 @@
 {
   "name": "ds-seo",
   "description": "SEO repository",
-  "version": "1.1.0",
-  "homepage": "https://github.com/gsn/ds-seo.git",
+  "version": "1.2.0",
+  "homepage": "https://github.com/trybrick/ds-seo.git",
   "author": {
-    "name": "Grocery Shopping Network",
-    "email": "tech@groceryshopping.net",
-    "url": "http://www.groceryshopping.net"
+    "name": "Brick Inc",
+    "email": "tech@trybrick.com",
+    "url": "http://www.trybrick.com"
   },
   "contributors": [
     {
       "name": "Tom Nguyen",
-      "email": "tnguyen@groceryshopping.net",
-    "url": "http://www.groceryshopping.net"
+      "email": "tnguyen@trybrick.com",
+    "url": "http://www.trybrick.com"
     }
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:gsn/ds-seo.git"
+    "url": "git@github.com:trybrick/ds-seo.git"
   },
   "keywords": [
     "website"
@@ -38,7 +38,7 @@
     "gulp-git": "~1.1.0",
     "tree-kill": "0.0.6",
     "forever": "*",
-    "elasticsearch": "*",
+    "aws-sdk": "^2.1.8",
     "del": "~1.1.1",
     "run-sequence": "~1.0.2"
   },

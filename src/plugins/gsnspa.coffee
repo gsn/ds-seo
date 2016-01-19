@@ -1,17 +1,16 @@
-fs = require('fs')
-path = require('path')
-url = require('url')
-request = require('request')
-util = require('../util')
+fs            = require('fs')
+path          = require('path')
+url           = require('url')
+request       = require('request')
+util          = require('../util')
 cache_manager = require('cache-manager')
-elasticsearch = require('elasticsearch')
-os = require('os')
-myEsHost = "172.25.46.108:9200"
+s3            = new (require('aws-sdk')).S3({params:{Bucket: 'digitalstore-cache'}})
+os            = require('os')
 
-# cache spa to a local file
+# cache spa to s3
 module.exports =
   init: ->
-    @cache = cache_manager.caching(store: es_cache)
+    @cache = cache_manager.caching(store: my_cache)
     return
 
   beforePhantomRequest: (req, res, next) ->
@@ -49,11 +48,11 @@ module.exports =
         @cache.get cacheFile.upath, (err, result) ->
           if err
             console.error err
-          if !err and result?._source
-            console.log 'cache hit'
-            return res.send(200, result._source.content)
-          next()
-          return
+            next()
+
+          data = result.Body.toString()
+          rst = JSON.parse(data)
+          return res.send(200, rst.content)
     else
       res.send 404
 
@@ -121,40 +120,37 @@ module.exports =
 
     return
 
-es_cache =
-  indexName: ->
-    today = new Date()
-    todayString = today.toISOString().split('T')[0]
-    return "escache-spa" #-#{todayString}"
+my_cache =
+  indexDate: (days)->
+    date = new Date()
+    date.setDate(date.getDate() + days);
+    dateString = date.toISOString().split('T')[0].replace(/\D+/gi, '')
+    return dateString
 
   get: (key, callback) ->
     self = @
-    client = new (elasticsearch.Client)
-      host: myEsHost
-      #log: 'trace'
-
-    client.get
-      index: self.indexName()
-      type: 'escache1'
-      ignore_unavailable: true
-      id: key
-    , callback
-    return
+    s3.getObject({
+        Key: "#{self.indexDate(0)}/#{key}.json"
+    }, callback);
 
   set: (key, value, callback) ->
     self = @
-    today = new Date()
-    value.created = today.toISOString()
-    value.createdts = today.getTime()
-    client = new (elasticsearch.Client)
-      host: myEsHost
-      #log: 'trace'
 
-    client.index
-      index: self.indexName()
-      type: 'escache1'
-      id: key
-      ignore_unavailable: true
-      body: value
-    , callback
-    return
+    # store duplicate to next day so it's available 24 hours
+    s3.putObject({
+        Key: "#{self.indexDate(1)}/#{key}.json"
+        ContentType: 'application/json;charset=UTF-8'
+        StorageClass: 'REDUCED_REDUNDANCY'
+        Body: value
+    }, () -> {});
+
+    # store for current date
+    request = s3.putObject({
+        Key: "#{self.indexDate(0)}/#{key}.json"
+        ContentType: 'application/json;charset=UTF-8'
+        StorageClass: 'REDUCED_REDUNDANCY'
+        Body: value
+    }, callback);
+
+    if (!callback)
+      request.send()
