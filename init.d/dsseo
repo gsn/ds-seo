@@ -2,7 +2,7 @@
 
 NODE_ENV="production"
 PORT="80"
-APP_DIR="/var/node/gsn-git/ds-seo"
+APP_DIR="/var/node/ds-seo"
 NODE_APP="prerender/gsnServer.js"
 CONFIG_DIR="$APP_DIR"
 PID_DIR="$APP_DIR/pid"
