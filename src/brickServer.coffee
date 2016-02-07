@@ -6,5 +6,5 @@ server = prerender
   phantomBasePort: process.env.PHANTOM_CLUSTER_BASE_PORT or 12300
   messageTimeout: process.env.PHANTOM_CLUSTER_MESSAGE_TIMEOUT
 
-server.use prerender.gsnspa()
+server.use prerender.brickspa()
 server.start()

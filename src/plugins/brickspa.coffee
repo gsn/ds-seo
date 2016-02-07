@@ -4,8 +4,10 @@ url           = require('url')
 request       = require('request')
 util          = require('../util')
 cache_manager = require('cache-manager')
-s3            = new (require('aws-sdk')).S3({params:{Bucket: 'digitalstore-cache'}})
+s3            = new (require('aws-sdk')).S3({params:{Bucket: 'digitalstore-cache'},region: 'us-west-2'})
 os            = require('os')
+
+validHosts = /(gsn|brick)/gmi
 
 # cache spa to s3
 module.exports =
@@ -14,10 +16,13 @@ module.exports =
     return
 
   beforePhantomRequest: (req, res, next) ->
+    if (req.prerender.url is 'healthcheck')
+      return res.send(200, 'ok')
+  
     parsed = url.parse(req.prerender.url, true)
     siteid = parsed.query.siteid
     host = parsed.host or parsed.hostname or ''
-    if (host.indexOf('.gsnretailer.com') < 0 && host.indexOf('.gsn.io') < 0)
+    if !validHosts.test(host)
       res.send 404
       return
 
@@ -49,8 +54,9 @@ module.exports =
           if err
             console.error err
             next()
+            return
 
-          data = result.Body.toString()
+          data = result.Body
           rst = JSON.parse(data)
           return res.send(200, rst.content)
     else
@@ -59,11 +65,11 @@ module.exports =
     return
 
   cleanHtml: (msg) ->
-    msg = msg.replace(/\\n|\\t|\\r|\\f/g, '');  # remove all new line, tag, and invalid spacing
-    msg = msg.replace(/\=\"\/\//gi, '="http://');  # convert all ="//" to ="http://"
-    msg = msg.replace(/<head>[+\s\S]+<meta charset=\"utf-8\"/gi, '<head><meta charset="utf-8"');  # remove everything before charset utf-8
-    msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--end:analytics-->/gi, ''); # strip out analytics
-    msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":'); # force proxy
+    msg = msg.replace(/\\n|\\t|\\r|\\f/g, '')  # remove all new line, tag, and invalid spacing
+    msg = msg.replace(/\=\"\/\//gi, '="http://')  # convert all ="//" to ="http://"
+    msg = msg.replace(/<head>[+\s\S]+<meta charset=\"utf-8\"/gi, '<head><meta charset="utf-8"')  # remove everything before charset utf-8
+    msg = msg.replace(/<!--begin:analytics[+\s\S]+<!--end:analytics-->/gi, '') # strip out analytics
+    msg = msg.replace('{"ContentBaseUrl":', '{"dontUseProxy": true,"ContentBaseUrl":') # force proxy
     return msg
 
   removeScriptTags: (msg) ->
@@ -89,12 +95,12 @@ module.exports =
     msg = @removeScriptTags msg
 
     # shrinking the file
-    msg = msg.replace(/\n|\t|\f|\r/g, '');
-    msg = msg.replace(/<!--.*?-->/g, '');
-    msg = msg.replace(/( data-[^=]*=")([^"])*(")/gi, '');
-    msg = msg.replace(/(\>\s+\<)+/g, '\>\n\<');
-    msg = msg.replace(/\s+/g, ' ');
-    msg = msg.replace(/></g, '>\r\n<');
+    msg = msg.replace(/\n|\t|\f|\r/g, '')
+    msg = msg.replace(/<!--.*?-->/g, '')
+    msg = msg.replace(/( data-[^=]*=")([^"])*(")/gi, '')
+    msg = msg.replace(/(\>\s+\<)+/g, '\>\n\<')
+    msg = msg.replace(/\s+/g, ' ')
+    msg = msg.replace(/></g, '>\r\n<')
 
     req.prerender.documentHTML = msg
 
@@ -109,7 +115,7 @@ module.exports =
         search: cacheFile.search
         server: os.hostname()
 
-      @cache.set cacheFile.upath, payload, (err, result) ->
+      @cache.set cacheFile.upath, JSON.stringify(payload, null, 2), (err, result) ->
         if err
           console.error err
 
@@ -123,34 +129,44 @@ module.exports =
 my_cache =
   indexDate: (days)->
     date = new Date()
-    date.setDate(date.getDate() + days);
+    date.setDate(date.getDate() + days)
     dateString = date.toISOString().split('T')[0].replace(/\D+/gi, '')
     return dateString
 
   get: (key, callback) ->
     self = @
-    s3.getObject({
-        Key: "#{self.indexDate(0)}/#{key}.json"
-    }, callback);
+    try
+      key = "#{self.indexDate(0)}/#{key}.json"
+      # console.log "get #{key}"
+      s3.getObject({
+          Key: key
+      }, callback)
+    catch e
+      callback(e)
 
   set: (key, value, callback) ->
     self = @
+    # note: do not store in reduce_redundancy or 
+    # object won't come back as json  
+    try
+      # store duplicate to next day so it's available 24 hours
+      s3.putObject({
+          Key: "#{self.indexDate(1)}/#{key}.json"
+          ContentType: 'application/json;charset=UTF-8'
+          Body: value
+      }, (err) ->
+        if err
+          console.error err
+      )
 
-    # store duplicate to next day so it's available 24 hours
-    s3.putObject({
-        Key: "#{self.indexDate(1)}/#{key}.json"
-        ContentType: 'application/json;charset=UTF-8'
-        StorageClass: 'REDUCED_REDUNDANCY'
-        Body: value
-    }, () -> {});
-
-    # store for current date
-    request = s3.putObject({
-        Key: "#{self.indexDate(0)}/#{key}.json"
-        ContentType: 'application/json;charset=UTF-8'
-        StorageClass: 'REDUCED_REDUNDANCY'
-        Body: value
-    }, callback);
+      # store for current date
+      request = s3.putObject({
+          Key: "#{self.indexDate(0)}/#{key}.json"
+          ContentType: 'application/json;charset=UTF-8'
+          Body: value
+      }, callback)
+    catch e
+      callback(e)
 
     if (!callback)
       request.send()

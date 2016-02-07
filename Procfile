@@ -1,1 +1,1 @@
-web: ./node_modules/forever/bin/forever prerender/gsnServer.js
+web: ./node_modules/forever/bin/forever prerender/brickServer.js

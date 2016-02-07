@@ -1,17 +1,17 @@
 {
   "name": "ds-seo",
   "description": "SEO repository",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "homepage": "https://github.com/trybrick/ds-seo.git",
   "author": {
-    "name": "Brick Inc",
+    "name": "Brick, Inc",
     "email": "tech@trybrick.com",
     "url": "http://www.trybrick.com"
   },
   "contributors": [
     {
-      "name": "Tom Nguyen",
-      "email": "tnguyen@trybrick.com",
+      "name": "Tom",
+      "email": "tech@trybrick.com",
     "url": "http://www.trybrick.com"
     }
   ],
@@ -28,11 +28,10 @@
     "request": "*",
     "coffee-script": "^1.9.1",
     "cache-manager": "^0.16.0",
-    "lodash": "^3.1.0",
+    "lodash": "^4.0.0",
     "phantom": "^0.7.2",
     "phantomjs": "^1.9.15",
     "gulp": "~3.8.10",
-    "gulp-grunt": "~0.5.2",
     "gulp-coffee": "*",
     "gulp-util": "*",
     "gulp-git": "~1.1.0",
@@ -42,12 +41,13 @@
     "del": "~1.1.1",
     "run-sequence": "~1.0.2"
   },
+  "license": "UNLICENSED",
   "devDependencies": {},
   "engines": {
     "node": ">= 0.12.0"
   },
   "scripts": {
     "test": "gulp test",
-    "postinstall": "node node_modules/gulp/bin/gulp"
+    "postinstall": "node_modules/gulp/bin/gulp"
   }
 }
