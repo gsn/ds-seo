@@ -1,7 +1,7 @@
 {
   "name": "ds-seo",
   "description": "SEO repository",
-  "version": "1.2.2",
+  "version": "1.2.6",
   "homepage": "https://github.com/trybrick/ds-seo.git",
   "author": {
     "name": "Brick, Inc",
@@ -28,7 +28,7 @@
     "request": "*",
     "coffee-script": "^1.9.1",
     "cache-manager": "^0.16.0",
-    "lodash": "^4.0.0",
+    "lodash": "^3.10.1",
     "phantom": "^0.7.2",
     "phantomjs": "^1.9.15",
     "gulp": "~3.8.10",
@@ -48,6 +48,6 @@
   },
   "scripts": {
     "test": "gulp test",
-    "postinstall": "node_modules/gulp/bin/gulp"
+    "postinstall": "./node_modules/gulp/bin/gulp"
   }
 }

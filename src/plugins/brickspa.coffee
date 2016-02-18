@@ -7,8 +7,6 @@ cache_manager = require('cache-manager')
 s3            = new (require('aws-sdk')).S3({params:{Bucket: 'digitalstore-cache'},region: 'us-west-2'})
 os            = require('os')
 
-validHosts = /(gsn|brick)/gmi
-
 # cache spa to s3
 module.exports =
   init: ->
@@ -19,14 +17,18 @@ module.exports =
     if (req.prerender.url is 'healthcheck')
       return res.send(200, 'ok')
   
+    validHosts = /(gsn|brick)+/gmi
     parsed = url.parse(req.prerender.url, true)
     siteid = parsed.query.siteid
     host = parsed.host or parsed.hostname or ''
     if !validHosts.test(host)
+      # console.log(host)
+      # console.log('hi')
       res.send 404
       return
 
     if (siteid?)
+      # console.log('hi2')
       indexPath = path.join('' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
       sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '').toLowerCase()
@@ -136,7 +138,7 @@ my_cache =
   get: (key, callback) ->
     self = @
     try
-      key = "#{self.indexDate(0)}/#{key}.json"
+      key = "-ds-seo/#{self.indexDate(0)}/#{key}.json"
       # console.log "get #{key}"
       s3.getObject({
           Key: key
@@ -151,7 +153,7 @@ my_cache =
     try
       # store duplicate to next day so it's available 24 hours
       s3.putObject({
-          Key: "#{self.indexDate(1)}/#{key}.json"
+          Key: "-ds-seo/#{self.indexDate(1)}/#{key}.json"
           ContentType: 'application/json;charset=UTF-8'
           Body: value
       }, (err) ->
@@ -161,7 +163,7 @@ my_cache =
 
       # store for current date
       request = s3.putObject({
-          Key: "#{self.indexDate(0)}/#{key}.json"
+          Key: "-ds-seo/#{self.indexDate(0)}/#{key}.json"
           ContentType: 'application/json;charset=UTF-8'
           Body: value
       }, callback)
