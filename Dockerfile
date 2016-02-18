@@ -45,3 +45,5 @@ WORKDIR /app/user
 RUN chmod +x run.sh
 RUN cp run.sh /bin
 RUN crontab -l | { cat; echo "0 */2 * * *  /bin/run.sh"; } | crontab -
+EXPOSE 4001
+

@@ -1,11 +1,13 @@
 #!/bin/bash
 
-ps auxw | grep brickServer | grep -v grep > /dev/null
+ps auxw | grep forever | grep -v grep > /dev/null
 
 if [ $? != 0 ]
 then
   /usr/bin/pkill -f phantom > /dev/null
-  /usr/bin/pkill -f brickServer > /dev/null
+  /usr/bin/pkill -f forever > /dev/null
+  /usr/bin/pkill -f phantom > /dev/null
+  /usr/bin/pkill -f node > /dev/null
 fi
 
 export RUNDIR="/app/user"
