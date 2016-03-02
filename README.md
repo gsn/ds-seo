@@ -11,3 +11,9 @@ With docker
 ```
 docker run --env-file=.env -p 4001:4001 -it brickinc/ds-seo /bin/run.sh
 ```
+
+Build
+```
+docker build -t brickinc/ds-seo:0.0.4 .
+docker tag brickinc/ds-seo:0.0.4 brickinc/ds-seo:latest
+```
