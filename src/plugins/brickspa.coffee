@@ -47,6 +47,8 @@ module.exports =
       parsed = url.parse(req.prerender.url)
       newUrl = req.prerender.url
       req.prerender.url = newUrl
+      if newUrl.indexOf('storelocator') > 0
+        req.prerender.waitAfterLastRequest = 2000
 
       # proceed next if no cache
       if parsed.search.indexOf("cache=") < 0
@@ -83,6 +85,14 @@ module.exports =
       i++
     return msg
 
+ removeNoScriptTags: (msg) ->
+    matches = msg.match(/<noscript(?:.*?)>(?:[\S\s]*?)<\/noscript>/gi)
+    i = 0
+    while matches and i < matches.length
+      msg = msg.replace(matches[i], '')
+      i++
+    return msg
+
   beforeSend: (req, res, next) ->
     if !req.prerender.documentHTML
       return next()
@@ -95,6 +105,7 @@ module.exports =
 
     msg = @cleanHtml msg
     msg = @removeScriptTags msg
+    msg = @removeNoScriptTags msg
 
     # shrinking the file
     msg = msg.replace(/\n|\t|\f|\r/g, '')
