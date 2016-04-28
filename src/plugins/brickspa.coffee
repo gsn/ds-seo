@@ -85,7 +85,7 @@ module.exports =
       i++
     return msg
 
- removeNoScriptTags: (msg) ->
+  removeNoScriptTags: (msg) ->
     matches = msg.match(/<noscript(?:.*?)>(?:[\S\s]*?)<\/noscript>/gi)
     i = 0
     while matches and i < matches.length
