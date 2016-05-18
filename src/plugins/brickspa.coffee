@@ -143,6 +143,9 @@ my_cache =
   indexDate: (days)->
     date = new Date()
     date.setDate(date.getDate() + days)
+
+    # add 8 hours to *cover* Pacific Time
+    date.setHours(date.getHours()+8)
     dateString = date.toISOString().split('T')[0].replace(/\D+/gi, '')
     return dateString
 
@@ -159,19 +162,10 @@ my_cache =
 
   set: (key, value, callback) ->
     self = @
+
     # note: do not store in reduce_redundancy or 
     # object won't come back as json  
     try
-      # store duplicate to next day so it's available 24 hours
-      s3.putObject({
-          Key: "-ds-seo/#{self.indexDate(1)}/#{key}.json"
-          ContentType: 'application/json;charset=UTF-8'
-          Body: value
-      }, (err) ->
-        if err
-          console.error err
-      )
-
       # store for current date
       request = s3.putObject({
           Key: "-ds-seo/#{self.indexDate(0)}/#{key}.json"
