@@ -145,7 +145,7 @@ my_cache =
     date.setDate(date.getDate() + days)
 
     # add 8 hours to *cover* Pacific Time
-    date.setHours(date.getHours()+8)
+    date.setHours(date.getHours()-8)
     dateString = date.toISOString().split('T')[0].replace(/\D+/gi, '')
     return dateString
 
