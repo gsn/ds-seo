@@ -40,13 +40,22 @@ module.exports =
         search: (parsed.search or '').replace("siteid=#{siteid}&cache=daily", '').replace(/&$/g, '').replace(/^\?/g, '')
         siteid: siteid
         parsedUrl: parsed
-        upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_').replace('_searchradius_', '').replace(/_$/g, '_')
+        upath: "#{siteid}#{sanitizedPath}#{sanitizedSearch}".replace(/(_)+/g, '_').replace('_searchradius_', '').replace(/_$/g, '_').replace('_sfs_true', '')
         ip: req.headers['x-forwarded-for'] or req.connection.remoteAddress
       
       req.prerender.cacheFile = cacheFile
       parsed = url.parse(req.prerender.url)
       newUrl = req.prerender.url
       req.prerender.url = newUrl
+
+      if cacheFile.upath.indexOf(',') > 0
+        res.send 404
+        return
+
+      if cacheFile.upath.indexOf('_fromurl_') > 0
+        res.send 404
+        return
+
       if newUrl.indexOf('storelocator') > 0
         req.prerender.waitAfterLastRequest = 2000
 
