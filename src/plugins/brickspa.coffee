@@ -31,7 +31,7 @@ module.exports =
       # console.log('hi2')
       indexPath = path.join('' + siteid, 'index.html')
       sanitizedPath = parsed.pathname.replace(/[^a-zA-Z0-9]/gi, '_')
-      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace("_siteid_#{siteid}", '').toLowerCase()
+      sanitizedSearch = (parsed.search or '').replace(/[^a-zA-Z0-9]/gi, '_').replace('_cache_daily', '').replace('_sft_true').replace("_siteid_#{siteid}", '').toLowerCase()
       cacheFile =
         indexPath: indexPath
         myPath: indexPath.replace('/index.', sanitizedPath + '.')
@@ -47,10 +47,6 @@ module.exports =
       parsed = url.parse(req.prerender.url)
       newUrl = req.prerender.url
       req.prerender.url = newUrl
-
-      if cacheFile.upath.indexOf(',') > 0
-        res.send 404
-        return
 
       if cacheFile.upath.indexOf('_fromurl_') > 0
         res.send 404
@@ -161,10 +157,16 @@ my_cache =
   get: (key, callback) ->
     self = @
     try
-      key = "-ds-seo/#{self.indexDate(0)}/#{key}.json"
+      key1 = "-ds-seo/perm/#{key}.json"
+
+      if (key.length < 7 or key.indexOf('circular') > -1)
+        key1 = "-ds-seo/#{self.indexDate(0)}/#{key}.json"
+
+      console.log key1
+
       # console.log "get #{key}"
       s3.getObject({
-          Key: key
+          Key: key1
       }, callback)
     catch e
       callback(e)
@@ -175,9 +177,14 @@ my_cache =
     # note: do not store in reduce_redundancy or 
     # object won't come back as json  
     try
+      key1 = "-ds-seo/perm/#{key}.json"
+
+      if (key.length < 7 or key.indexOf('circular') > -1)
+        key1 = "-ds-seo/#{self.indexDate(0)}/#{key}.json"
+
       # store for current date
       request = s3.putObject({
-          Key: "-ds-seo/#{self.indexDate(0)}/#{key}.json"
+          Key: key1
           ContentType: 'application/json;charset=UTF-8'
           Body: value
       }, callback)
